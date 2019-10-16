@@ -39,7 +39,7 @@
     Constructor
 */
 /**************************************************************************/
-Adafruit_FRAM_I2C::Adafruit_FRAM_I2C()
+Adafruit_FRAM_I2C::Adafruit_FRAM_I2C(void)
 {
   _framInitialised = false;
 }
@@ -54,7 +54,7 @@ Adafruit_FRAM_I2C::Adafruit_FRAM_I2C()
     doing anything else)
 */
 /**************************************************************************/
-boolean Adafruit_FRAM_I2C::begin(uint8_t addr)
+boolean Adafruit_FRAM_I2C::begin(uint8_t addr, uint16_t manufacturerID, uint16_t productID)
 {
   i2c_addr = addr;
 
@@ -64,15 +64,15 @@ boolean Adafruit_FRAM_I2C::begin(uint8_t addr)
   uint16_t manufID, prodID;
   getDeviceID(&manufID, &prodID);
 
-  /* PRH: The 1mbit (Cypress-FM24V10) FRAM these changes were tested with uses 04:400 for manufID:prodID */
-  if (manufID != 0x00A && manufID != 0x04)
+  /* Make libary generic to allow different FRAMs to be used, pass manufacturerID and productID in as parameters */
+  if (manufID != manufacturerID)
   {
 #ifdef DEV_DBG
     Serial.print("Unexpected Manufacturer ID: 0x"); Serial.println(manufID, HEX);
 #endif
     return false;
   }
-  if (prodID != 0x510 && prodID != 0x400)
+  if (prodID != productID)
   {
 #ifdef DEV_DBG
     Serial.print("Unexpected Product ID: 0x"); Serial.println(prodID, HEX);

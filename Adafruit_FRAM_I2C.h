@@ -51,12 +51,14 @@
 #define MB85RC_PAGE_BIT               (0x01) /* Page select bit (A16), MSB of 17 bit address */
 #define MB85RC_DEFAULT_ADDRESS        (0x50) /* 1010 + A2 + A1 + A0 = 0x50 default */
 #define MB85RC_SLAVE_ID               (0xF8)
+#define MB85RC_MANUFACTURERID         (0x00A) // Manufacturer ID for Fujitsu
+#define MB85RC_PRODUCTID              (0x510) // Product ID for the Fujitsu 256K I2C FRAM (the 64K I2C FRAM has a Product ID of 0x358)
 
 class Adafruit_FRAM_I2C {
  public:
   Adafruit_FRAM_I2C(void);
 
-  boolean  begin (uint8_t addr = MB85RC_DEFAULT_ADDRESS);
+  boolean  begin (uint8_t addr = MB85RC_DEFAULT_ADDRESS, uint16_t manufacturerID = MB85RC_MANUFACTURERID, uint16_t productID = MB85RC_PRODUCTID);
   void     write8 (uint32_t framAddr, uint8_t value);
   void     write (uint32_t framAddr, const uint8_t *values, uint32_t count);
   uint8_t  read8  (uint32_t framAddr);
