@@ -54,7 +54,7 @@ Adafruit_FRAM_I2C::Adafruit_FRAM_I2C(void)
     doing anything else)
 */
 /**************************************************************************/
-boolean Adafruit_FRAM_I2C::begin(uint8_t addr, uint16_t manufacturerID, uint16_t productID)
+boolean Adafruit_FRAM_I2C::begin(uint8_t addr, uint16_t manufacturerID, uint16_t productID, boolean verifyID)
 {
   i2c_addr = addr;
 
@@ -64,20 +64,35 @@ boolean Adafruit_FRAM_I2C::begin(uint8_t addr, uint16_t manufacturerID, uint16_t
   uint16_t manufID, prodID;
   getDeviceID(&manufID, &prodID);
 
-  /* Make libary generic to allow different FRAMs to be used, pass manufacturerID and productID in as parameters */
-  if (manufID != manufacturerID)
-  {
+  /* Not every FRAM device supports the manufacturerID and productID commands, even in the same manufacturer's product line */
+  /* So allow bypassing the verifyID checks, but provide and alternate means of verifying the FRAM is talking */
+  if(verifyID) {
+      /* Make libary generic to allow different FRAMs to be used, pass manufacturerID and productID in as parameters */
+      if (manufID != manufacturerID)
+      {
 #ifdef DEV_DBG
-    Serial.print("Unexpected Manufacturer ID: 0x"); Serial.println(manufID, HEX);
+        Serial.print("Unexpected Manufacturer ID: 0x"); Serial.println(manufID, HEX);
 #endif
-    return false;
-  }
-  if (prodID != productID)
-  {
+        return false;
+      }
+      if (prodID != productID)
+      {
+    #ifdef DEV_DBG
+        Serial.print("Unexpected Product ID: 0x"); Serial.println(prodID, HEX);
+    #endif
+        return false;
+      }
+  } else {
+      /* If not verifying the naufacturerID and productID perform and alternate verification */
+      uint8_t values[2];
+      
+      if (read(0x00000000, values, 2) != 2)
+      {
 #ifdef DEV_DBG
-    Serial.print("Unexpected Product ID: 0x"); Serial.println(prodID, HEX);
+        Serial.println("Unexpected read result, FRAM likely not present.");
 #endif
-    return false;
+        return false;
+      }
   }
   /* Everything seems to be properly initialised and connected */
   _framInitialised = true;
@@ -169,9 +184,10 @@ uint8_t Adafruit_FRAM_I2C::read8 (uint32_t framAddr)
                 The pointer to an array of 8-bit values to read starting at addr
     @params[in] count
                 The number of bytes to read
+    @returns    The 32-bit value of the number of bytes read
 */
 /**************************************************************************/
-void Adafruit_FRAM_I2C::read (uint32_t framAddr, uint8_t *values, uint32_t count)
+uint32_t Adafruit_FRAM_I2C::read (uint32_t framAddr, uint8_t *values, uint32_t count)
 {
   uint32_t hasRead = 0;
   uint32_t toRead = count;
@@ -202,6 +218,7 @@ void Adafruit_FRAM_I2C::read (uint32_t framAddr, uint8_t *values, uint32_t count
 	  Serial.println(hasRead);
   }
 #endif
+  return hasRead;
 }
 
 /**************************************************************************/
